@@ -1,3 +1,4 @@
+package com.library;
 import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -5,22 +6,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.swing.JButton;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Library {
 	private HashMap<String, Artist> artists = new HashMap<String, Artist>();
 	private HashMap<String, Song> songs = new HashMap<String, Song>();
-	
-	/*
-	public List<Artist> artistsContainsAmpersant = new LinkedList<Artist>();
-	public List<Artist> artistsContainsFeat = new LinkedList<Artist>();
-	public List<Artist> artistsContainsFt = new LinkedList<Artist>();
-	public List<Artist> artistsContainsAnd = new LinkedList<Artist>();
-	*/
+	private HashMap<String, Playlist> playlists = new HashMap<String, Playlist>();
+
 	public List<Artist> artistsPossibleJoined = new LinkedList<Artist>();
+	
+	//ADDERS
 	
 	public Artist addArtist(String title){
 		title = title.toLowerCase();
@@ -33,12 +29,44 @@ public class Library {
 		   title.contains("&") || 
 		   title.toLowerCase().contains(" vs ") || 
 		   title.toLowerCase().contains(" ft") ||
+		   title.toLowerCase().contains("feat.") ||
 		   title.toLowerCase().contains(" and ")){
 			artistsPossibleJoined.add(artist);
 		}
 		artists.put(title, artist);
 		return artist;
 	}
+	
+	public Artist addArtist(String id, String name){
+		Artist artist = null;
+		if(artists.containsKey(name.toLowerCase())){
+			artist = artists.get(name.toLowerCase());
+			artist.setSpotifyData(id, name);
+//			System.out.println("existuje: " + name);
+			return artist;
+		}
+		artist = new Artist(id, name);
+		artists.put(name.toLowerCase(), artist);
+		return artist;
+	}
+	
+	public Song addSong(String id, String name, long duration){
+		if(songs.containsKey(id)){
+			return songs.get(id);
+		}
+		for(Song song : songs.values()){
+			if(song.getBestName().toLowerCase().replace(".mp3", "").trim().equals(name.toLowerCase().trim())){
+				song.addSpotifyData(id, name, duration);
+				return song;
+			}
+		}
+		
+		Song song = new Song(id, name, duration);
+		songs.put(id, song);
+		return song;
+	}
+	
+	
 	public Song addSong(JSONObject object){
 		String title = object.getString("title");
 		if(songs.containsKey(title)){
@@ -50,10 +78,11 @@ public class Library {
 		//todo dorobiť pridanie autorov
 		return song;
 	}
+	
 	public Song addSong(File file, Artist ... artists){
 		String title = file.getName().toLowerCase();
 		if(songs.containsKey(title)){
-			System.out.println("song " + title + " už existuje");
+//			System.out.println("song " + title + " už existuje");
 			return songs.get(title);
 		}
 		Song song = new Song(file);
@@ -62,15 +91,8 @@ public class Library {
 		return song;
 	}
 	
-	public String getArtistsString(){
-		return String.join("\n", artists.values().stream()
-												 .map(a -> a.toString() + "(" + a.getNumberOfSongs() + ")")
-												 .collect(Collectors.toList()));
-	}
-	
 	public void fromJson(JSONObject json){
 		JSONArray songsArray = json.getJSONArray("songs");
-//		System.out.println(json);
 		for(int i=0 ; i<songsArray.length() ; i++){
 			JSONObject songObject = songsArray.getJSONObject(i);
 			Song song = addSong(songObject);
@@ -88,13 +110,13 @@ public class Library {
 		for(Song song : songs.values()){
 			songsArray.put(song.toJson());
 		}
-//		JSONArray artistsArray = new JSONArray();
-//		for(Artist artist : artists.values()){
-//			artistsArray.put(artist.toJson());
-//		}
+		JSONArray artistsArray = new JSONArray();
+		for(Artist artist : artists.values()){
+			artistsArray.put(artist.toJson());
+		}
 		JSONObject result = new JSONObject();
 		result.put("songs", songsArray);
-//		result.put("artists", artistsArray);
+		result.put("artists", artistsArray);
 		
 		return result;
 	}
@@ -110,7 +132,7 @@ public class Library {
 
 		System.out.println("test č. 2: " + showStats());
 		//prejde všetky ID artistov spolu s názov súboru a porovnáva ich 
-		getArtistsSet().stream().forEach(artist -> {
+		artists.keySet().stream().forEach(artist -> {
 			songs.values().stream().filter(a -> !a.containsArtists(artists.get(artist))).forEach(song -> {
 				String searchA = song.getTitle().toLowerCase();
 				String searchB = artist.toLowerCase();
@@ -153,12 +175,14 @@ public class Library {
 	}
 	public void divideArtist(Artist artist){
 		List<Song> songs = artist.getSongs();
-		List<Artist> newArtists = new LinkedList<Artist>(); 
+		List<Artist> newArtists = new LinkedList<Artist>();
+		
 		for(int i=0 ; i<artist.subTitles.length ; i++){
 			newArtists.add(i, addArtist(artist.subTitles[i]));//vytvory noveho interpreta
 			newArtists.get(i).addSongs(songs);//prida mu všetky pesničky od stareho
 			artists.put(artist.subTitles[i], newArtists.get(i));
 		}
+		
 		for(int i=0 ; i<songs.size() ; i++){
 			songs.get(i).removeArtist(artist);//vymaže s pesničky stareho interpreta
 			songs.get(i).addArtists(newArtists);//prida pesničkam novych interpretov
@@ -166,16 +190,14 @@ public class Library {
 		artists.remove(artist.getTitle());
 	}
 	
-	public Set<String> getArtistsSet(){
-		return artists.keySet();
+
+	public String toString(){
+		return String.join("\n", songs.values().stream().map(a -> a.toString()).collect(Collectors.toList()));
 	}
-	
-	
 	
 	public String showStats() {
 		String result = "songs: " + songs.size();
 		result += ", artists: " + artists.size();
-
 		long artistsWithSubtitle = artists.values().stream().filter(a -> a.subTitles.length > 1).count();
 		result += ", artists with subTitle: " + artistsWithSubtitle;
 		
@@ -184,26 +206,36 @@ public class Library {
 		
 		return result;
 	}
+	
+	//GETTERS
 	public Object[][] getArtistData(){
-		Object[][] result = new Object[artists.size()][3];
+		Object[][] result = new Object[artists.size()][4];
 		int i=0;
 		for(Artist a : artists.values()){
 			result[i][0] = i + 1;
 			result[i][1] = a.getTitle();
 			result[i][2] = a.getNumberOfSongs();
+			result[i][3] = a;
 			i++;
 		}
 		return result;
 	}
+
+	public String getArtistsString(){
+		return String.join("\n", artists.values().stream()
+												 .map(a -> a.toString() + "(" + a.getNumberOfSongs() + ")")
+												 .collect(Collectors.toList()));
+	}
+	
 	public Object[][] getTableData(){
 		Object[][] result = new Object[songs.size()][9];
 		int counter = 0;
 		for(Song s : songs.values()){
 			result[counter][1] = s.getStringArtists();//s.getTagArtist();
-			result[counter][2] = s.getTagName();
+			result[counter][2] = s.getBestName();//s.getTagName();
 			result[counter][3] = s.getYear();
 			result[counter][4] = s.getGenre();
-			result[counter][5] = Long.toString(s.getLength());
+			result[counter][5] = s.getLengthFormatted();
 			result[counter][6] = Long.toString(s.getBitrate());
 			result[counter][7] = s.getTitle();
 			result[counter][8] = s;
@@ -216,13 +248,11 @@ public class Library {
 	public int getNumberOfArtists(){return artists.size();}
 	public Song getSong(String title){return songs.get(title.toLowerCase());}
 	public Artist getArtist(String title){return artists.get(title.toLowerCase());}
-//	public List<Artist> getArtistBySongs(){
-//		return artists.values().stream()
-//							   .sorted((b, a) -> a.getNumberOfSongs() - b.getNumberOfSongs())
-//							   .collect(Collectors.toList());
-//	}
-	
-	public String toString(){
-		return String.join("\n", songs.values().stream().map(a -> a.toString()).collect(Collectors.toList()));
+	public Set<String> getSongs(){
+		return songs.keySet();
 	}
+	public Set<String> getSongNames(){
+		return songs.values().stream().map(a -> a.getTagName()).collect(Collectors.toSet());
+	}
+	
 }

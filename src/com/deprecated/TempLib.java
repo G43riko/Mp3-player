@@ -1,6 +1,6 @@
+package com.deprecated;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 public class TempLib {
 	private List<String> tempArtists = new LinkedList<String>();

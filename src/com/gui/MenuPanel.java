@@ -1,3 +1,4 @@
+package com.gui;
 import java.io.File;
 
 import javax.swing.JFileChooser;
@@ -6,6 +7,10 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
 import org.json.JSONObject;
+
+import com.library.Library;
+import com.utils.FileManager;
+
 
 public class MenuPanel extends JMenuBar{
 	private static final long serialVersionUID = 1L;
