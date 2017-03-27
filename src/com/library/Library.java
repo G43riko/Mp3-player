@@ -1,6 +1,7 @@
 package com.library;
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -8,6 +9,11 @@ import java.util.stream.Collectors;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import com.gui.SongsViewer;
+import com.utils.FileManager;
+import com.utils.FileSearcher;
+import com.utils.FileUtils;
 
 public class Library {
 	private HashMap<String, Artist> artists = new HashMap<String, Artist>();
@@ -66,6 +72,17 @@ public class Library {
 		return song;
 	}
 	
+	public void importFilesFromDirectory(String path){
+		List<String> songs = FileSearcher.searchDir(path).stream().filter(a -> a.contains(".mp3")).collect(Collectors.toList());
+		
+		FileUtils.createLibrary(this, songs);
+		
+		postProcess();
+	}
+	
+	public void importFileFromFile(String fileName){
+		fromJson(new JSONObject(FileManager.loadFromFile(fileName)));
+	}
 	
 	public Song addSong(JSONObject object){
 		String title = object.getString("title");
@@ -171,6 +188,11 @@ public class Library {
 			divideArtist(array.get(i));
 		}
 		System.out.println("test č. 4: " + showStats());
+		/*
+		for(Artist a : artists.values()){
+			a.getSongs()
+		}
+		*/
 		
 	}
 	public void divideArtist(Artist artist){
@@ -213,7 +235,7 @@ public class Library {
 		int i=0;
 		for(Artist a : artists.values()){
 			result[i][0] = i + 1;
-			result[i][1] = a.getTitle();
+			result[i][1] = a.getBestTitle();
 			result[i][2] = a.getNumberOfSongs();
 			result[i][3] = a;
 			i++;
@@ -228,18 +250,21 @@ public class Library {
 	}
 	
 	public Object[][] getTableData(){
-		Object[][] result = new Object[songs.size()][9];
-		int counter = 0;
+		Object[][] result = new Object[songs.size()][SongsViewer.titles.length];
+		int counter = 0, i;
 		for(Song s : songs.values()){
-			result[counter][1] = s.getStringArtists();//s.getTagArtist();
-			result[counter][2] = s.getBestName();//s.getTagName();
-			result[counter][3] = s.getYear();
-			result[counter][4] = s.getGenre();
-			result[counter][5] = s.getLengthFormatted();
-			result[counter][6] = Long.toString(s.getBitrate());
-			result[counter][7] = s.getTitle();
-			result[counter][8] = s;
-			result[counter][0] = Integer.toString(counter++);
+			i = 0;
+			result[counter][i++] = Integer.toString(counter);
+			result[counter][i++] = s.getStringArtists();//s.getTagArtist();
+			result[counter][i++] = s.getBestName();//s.getTagName();
+			result[counter][i++] = s.getYear();
+			result[counter][i++] = s.getGenre();
+			result[counter][i++] = s.getLengthFormatted();
+			result[counter][i++] = Long.toString(s.getBitrate());
+			result[counter][i++] = s.getTitle();
+			result[counter][i++] = s;
+			result[counter][i++] = s.getSource();
+			counter++;
 		}
 		return result;
 	}
@@ -248,8 +273,16 @@ public class Library {
 	public int getNumberOfArtists(){return artists.size();}
 	public Song getSong(String title){return songs.get(title.toLowerCase());}
 	public Artist getArtist(String title){return artists.get(title.toLowerCase());}
-	public Set<String> getSongs(){
+	
+	public Set<String> getSimilarArtists(String title){
+		return artists.keySet().stream().filter(a -> a.toLowerCase().trim().contains(title.toLowerCase().trim())).collect(Collectors.toSet());
+	}
+	public Set<String> getSongsString(){
 		return songs.keySet();
+	}
+
+	public Set<Song> getSongs(){
+		return new HashSet<Song>(songs.values());
 	}
 	public Set<String> getSongNames(){
 		return songs.values().stream().map(a -> a.getTagName()).collect(Collectors.toSet());

@@ -59,14 +59,18 @@ public class Artist {
 		return result;
 	}
 	public void addSong(Song song){
-		songs.add(song);
+		if(!songs.contains(song)){
+			songs.add(song);
+		}
 	}
 
 	public void addSongs(List<Song> newSongs){
-		songs.addAll(newSongs);
+		newSongs.stream()
+				.filter(a -> !songs.contains(a))
+				.forEach(songs::add);
 	}
 	
-	List<Song> getSongs(){
+	public List<Song> getSongs(){
 		return songs;
 	}
 	
@@ -75,11 +79,20 @@ public class Artist {
 	}
 	
 	public String toString(){
-		return getTitle();
+		return getBestTitle();
 	}
+	
 	public String getTitle(){
 		return title;
 	}
+
+	public String getBestTitle(){
+		if(!spotifyName.isEmpty()){
+			return spotifyName;
+		}
+		return title;
+	}
+	
 	public JSONObject toJson(){
 		JSONObject result = new JSONObject();
 		result.put("title", title);

@@ -1,7 +1,9 @@
-package com.API;
+package com.API.spotify;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +17,7 @@ public class SpotifyData {
 	private List<SpotifyPlaylist> playlists = new ArrayList<SpotifyPlaylist>();
 	private Map<String, SpotifyArtist> artists = new HashMap<String, SpotifyArtist>();
 	private int duplicateArtists = 0;
+	
 	//CLASES
 	
 	private class SpotifyPlaylist{
@@ -42,31 +45,6 @@ public class SpotifyData {
 		}
 		return result;
 	};
-	
-	private class SpotifySong{
-		private long duration;
-		private String id;
-		private String name;
-		private String isrc;
-		private String ean;
-		private String preview;
-		private String upc;
-		private List<SpotifyArtist> artists = new ArrayList<SpotifyArtist>();
-		@Override
-		public String toString() {
-			return name + "[" + id + "(" + isrc + ")](" + duration + ")";
-		}
-	}
-	
-	private class SpotifyArtist{
-		private String id;
-		private String name;
-		private List<SpotifySong> songs = new ArrayList<SpotifySong>();
-		@Override
-		public String toString() {
-			return name + "[" + id + "] - " + songs.size() + "songs";
-		}
-	}
 	
 	//ADDERS
 	
@@ -109,14 +87,22 @@ public class SpotifyData {
 	
 	//GETTERS
 	
-	public Set<String> getArtists(){
+	public Set<String> getArtistsString(){
 		return artists.values().stream().map(a -> a.name).collect(Collectors.toSet());
 	}
 	
-	public Set<String> getSongs(){
+	public Set<String> getSongStrings(){
 		return songs.stream().map(a -> a.name).collect(Collectors.toSet());
 	}
 	
+	public ArrayList<SpotifySong> getSongs(){
+		return new ArrayList<SpotifySong>(songs);
+	}
+
+	
+	public Map<String, SpotifyArtist> getArtists(){
+		return artists;
+	}
 	private SpotifyPlaylist getPlaylist(JSONObject object){
 		SpotifyPlaylist playlist = new SpotifyPlaylist();
 		playlist.total = object.getInt("total");

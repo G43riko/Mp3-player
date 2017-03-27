@@ -29,25 +29,30 @@ public class Song {
 	private long addSpotifyData = 0;
 	public int frames;
 	private int bitrate;
-	public File file; 
+	public File file = null; 
 	
 	//CONTRUCTORS
 	
 	public Song(JSONObject object){
 		title = object.getString("title");
-		if(object.has("tagName"))
+		if(object.has("tagName")){
 			nameByTag = object.getString("tagName");
+		}
 		length = object.getLong("length");
-		if(object.has("tagArtist"))
+		if(object.has("tagArtist")){
 			artistByTag = object.getString("tagArtist");
-		if(object.has("year"))
+		}
+		if(object.has("year")){
 			year = object.getString("year");
-		if(object.has("genre"))
+		}
+		if(object.has("genre")){
 			genre = object.getString("genre");
+		}
 		absoluePath = object.getString("absoluePath");
 		bitrate = object.getInt("bitrate");
-		if(object.has("imported"))
+		if(object.has("imported")){
 			imported = object.getLong("imported");
+		}
 //		file = new File(absoluePath);
 	}
 	
@@ -82,7 +87,7 @@ public class Song {
 	public void addArtists(List<Artist> newArtists){
 		newArtists.stream()
 				  .filter(a -> !artists.contains(a))
-				  .forEach(a -> artists.add(a));
+				  .forEach(artists::add);
 	}
 	
 	//OTHERS
@@ -119,6 +124,15 @@ public class Song {
 	}
 	
 	//GETTERS
+	
+	public String getSource(){
+		String result = spotifyId.isEmpty() ? "" : "S";
+		if(absoluePath != null){
+			result += "L";
+		}
+		return result;
+	}
+	
 	public String getBestName(){
 		if(!spotifyName.isEmpty()){
 			return spotifyName;
@@ -128,7 +142,7 @@ public class Song {
 		}
 		return name;
 	}
-	public String getStringArtists() {return String.join("; ", artists.stream().map(a -> a.getTitle()).collect(Collectors.toList()));}
+	public String getStringArtists() {return String.join("; ", artists.stream().map(a -> a.getBestTitle()).collect(Collectors.toList()));}
 	public String getTagName() {return nameByTag;}
 	public long getLength() {return length;}
 	public long getBitrate() {return bitrate;}

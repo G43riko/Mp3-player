@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
@@ -14,10 +15,11 @@ import javax.swing.JTabbedPane;
 
 import org.json.JSONObject;
 
-import com.API.SpotifyAPI;
-import com.API.SpotifyData;
+import com.API.spotify.SpotifyAPI;
+import com.API.spotify.SpotifyData;
 import com.gui.ArtistsViewer;
 import com.gui.BottomMenu;
+import com.gui.GuiManager;
 import com.gui.MenuPanel;
 import com.gui.SongsViewer;
 import com.library.Artist;
@@ -29,36 +31,49 @@ import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
 import com.player.PlayerManager;
 import com.utils.FileManager;
+import com.utils.FileSearcher;
 import com.utils.HttpHandler;
+import com.utils.Matcher;
 
 import javazoom.jl.player.advanced.AdvancedPlayer;
 
 public class MainMp3Library {
 //	static AdvancedPlayer player = null;;
+	private final static String FILE_LOCAL_SONGS = "data.txt";
+	private final static String FILE_SPOTIFY_SONGS	= "spotifySongs";
 	static File playing = null;
 	Library lib = new Library();
 	PlayerManager playerManager = new PlayerManager();
+	GuiManager guiManager;
+	
+	
 	
 	public MainMp3Library(String path){
-//		createLibrary(FileSearcher.searchDir(path).stream().filter(a -> a.contains(".mp3")).collect(Collectors.toList()));
-		lib.fromJson(new JSONObject(FileManager.loadFromFile("data.txt")));
+		lib.importFileFromFile(FILE_LOCAL_SONGS);
+//		lib.importFilesFromDirectory(path);
 		
-//		lib.postProcess();
 		
 		System.out.println(lib.showStats());
-		SpotifyAPI.loadSongsFromFile("spotifySongs");
-		Object[][] data = SpotifyAPI.getData().getData();
-		for(int i=0 ; i<data.length ; i++){
-			Song song = lib.addSong((String)data[i][0], (String)data[i][1], (long)data[i][2]);
-			HashMap<String, String> songArtists = (HashMap<String, String>)data[i][3];
-			for(Entry<String, String> artistData : songArtists.entrySet()){
-				Artist artist = lib.addArtist(artistData.getKey(), artistData.getValue());
-//				System.out.println(artist);
-				song.addArtist(artist);
-				artist.addSong(song);
-			}
-		}
-		System.out.println(lib.showStats());
+		SpotifyAPI.loadSongsFromFile(FILE_SPOTIFY_SONGS);
+		
+//		Matcher.JoinSpotifySongs(SpotifyAPI.getData(), lib);
+//		System.exit(1);
+		
+		
+//		Object[][] data = SpotifyAPI.getData().getData();
+//		for(int i=0 ; i<data.length ; i++){
+//			Song song = lib.addSong((String)data[i][0], (String)data[i][1], (long)data[i][2]);
+//			HashMap<String, String> songArtists = (HashMap<String, String>)data[i][3];
+//			for(Entry<String, String> artistData : songArtists.entrySet()){
+//				Artist artist = lib.addArtist(artistData.getKey(), artistData.getValue());
+////				System.out.println(artist);
+//				song.addArtist(artist);
+//				artist.addSong(song);
+//			}
+//		}
+//		System.out.println(lib.showStats());
+		
+		
 
 //		Set<String> artists = SpotifyAPI.getData().getArtists();
 //		long know = artists.stream().filter(a -> lib.getArtist(a) != null).peek(System.out::println).count();
@@ -69,24 +84,8 @@ public class MainMp3Library {
 //		
 
 //		WebV
-		SongsViewer songsViewer = new SongsViewer(lib.getTableData(), playerManager);
-		ArtistsViewer artistsViewer = new ArtistsViewer(lib.getArtistData(), playerManager);
+		guiManager = new GuiManager(lib, playerManager);
 		
-		JTabbedPane tabbedPanel = new JTabbedPane();
-		tabbedPanel.addTab("Songs", songsViewer.getPanel());
-		tabbedPanel.addTab("Artists", artistsViewer.getPanel());
-		
-		BottomMenu bottomPanel = new BottomMenu(playerManager);
-		MenuPanel menuPanel = new MenuPanel(lib, artistsViewer);
-		playerManager.setBottomPanel(bottomPanel);
-
-
-		JFrame window = createWindow("MP3s library", 800, 600);	
-		
-		
-		window.add(menuPanel, BorderLayout.NORTH);
-		window.add(tabbedPanel, BorderLayout.CENTER);
-		window.add(bottomPanel, BorderLayout.SOUTH);
 		
 		
 		
@@ -133,63 +132,7 @@ public class MainMp3Library {
 	    return v1[t.length()];
 	}
 	
-	private void createLibrary(List<String> mp3s){
-		int counter = 0;
-		long start = System.currentTimeMillis();
-		for(String fileName : mp3s){
-			try {
-				Mp3File mp3file = new Mp3File(fileName);
-				Song song = lib.addSong(new File(fileName));
-				//song.setLength(mp3file.getLengthInSeconds());
-				song.setLength(mp3file.getLengthInMilliseconds());
-				song.frames = (mp3file.getSampleRate()) * mp3file.getFrameCount();
-				
-				song.setBitrate(mp3file.getBitrate());
-				if (mp3file.hasId3v1Tag()) {
-					ID3v1 id3v1Tag = mp3file.getId3v1Tag();
-					//song.setGenre(id3v1Tag.getGenre() + " (" + id3v1Tag.getGenreDescription() + ")");
-					song.setGenre(id3v1Tag.getGenreDescription());
-					song.setYear(id3v1Tag.getYear());
-					
-					String tagArtist = id3v1Tag.getArtist();
-					if(!tagArtist.isEmpty()){
-						Artist artist = lib.addArtist(tagArtist); 
-						artist.addSong(song);
-						song.addArtist(artist);
-						song.setTagArtist(tagArtist);
-					}
-					
-					String tagName = id3v1Tag.getTitle();
-					if(!tagName.isEmpty()){
-						song.setTagName(tagName);
-					}
-				}
-				counter++;
-				if(counter > 100){
-					break;
-				}
-			} catch (UnsupportedTagException | InvalidDataException | IOException e) {
-				System.out.println("chyba: " +fileName);
-			}
-		}
-		System.out.println("trvalo to: " + (System.currentTimeMillis() - start));
-	}
 	
-	private JFrame createWindow(String title, int width, int height){
-		JFrame window = new JFrame(title);
-		
-		window.setLayout(new BorderLayout());
-		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		window.setSize(width, height);
-		
-
-		window.setExtendedState(JFrame.MAXIMIZED_BOTH); 
-		window.setUndecorated(true);
-		window.setVisible(true);
-		
-		window.setVisible(true);
-		return window;
-	}
 
 	
 	public static void main(String[] args) {

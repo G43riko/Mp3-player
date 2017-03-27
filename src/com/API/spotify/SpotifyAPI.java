@@ -1,4 +1,4 @@
-package com.API;
+package com.API.spotify;
 
 import java.io.File;
 import java.util.HashMap;
@@ -31,7 +31,7 @@ public class SpotifyAPI {
 		for(int i=0 ; i<songs.length() ; i++){
 			data.addSong(songs.getJSONObject(i).getJSONObject("track"));
 		}
-//		System.out.println(data)
+//		System.out.println(data);
 //		data.show();
 		return result;
 	}
