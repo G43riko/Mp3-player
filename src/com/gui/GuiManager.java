@@ -20,7 +20,7 @@ public class GuiManager {
 	
 	public GuiManager(Library lib, PlayerManager playerManager){
 		this.lib = lib;
-		songsViewer = new SongsViewer(lib.getTableData(), playerManager);
+		songsViewer = new SongsViewer(lib, playerManager);
 		artistsViewer = new ArtistsViewer(lib.getArtistData(), playerManager);
 		
 
@@ -38,6 +38,9 @@ public class GuiManager {
 		window.add(menuPanel, BorderLayout.NORTH);
 		window.add(tabbedPanel, BorderLayout.CENTER);
 		window.add(bottomPanel, BorderLayout.SOUTH);
+		
+		
+		window.setVisible(true);
 	}
 
 	
@@ -53,7 +56,6 @@ public class GuiManager {
 		window.setUndecorated(true);
 		window.setVisible(true);
 		
-		window.setVisible(true);
 		return window;
 	}
 }

@@ -1,5 +1,6 @@
 package com.library;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -7,9 +8,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.swing.text.Position;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.gui.Pos;
 import com.gui.SongsViewer;
 import com.utils.FileManager;
 import com.utils.FileSearcher;
@@ -43,6 +47,31 @@ public class Library {
 		return artist;
 	}
 	
+	public Artist addArtist(JSONObject object){
+		Artist artist = null;
+		if(object.has("spotifyId")){
+			artist = artists.get(object.getString("spotifyId"));
+			if(artist != null){
+				return artist;
+			}
+		}
+		if(object.has("title")){
+			artist = artists.get(object.getString("title"));
+			if(artist != null){
+				return artist;
+			}
+		}
+		
+		artist = new Artist(object);
+		if(artist.hasSpotifyData()){
+			artists.put(artist.getSpotifyId(), artist);
+		}
+		else{
+			artists.put(artist.getTitle(), artist);
+		}
+		return artist;
+	}
+	
 	public Artist addArtist(String id, String name){
 		Artist artist = null;
 		if(artists.containsKey(name.toLowerCase())){
@@ -72,27 +101,25 @@ public class Library {
 		return song;
 	}
 	
-	public void importFilesFromDirectory(String path){
-		List<String> songs = FileSearcher.searchDir(path).stream().filter(a -> a.contains(".mp3")).collect(Collectors.toList());
-		
-		FileUtils.createLibrary(this, songs);
-		
-		postProcess();
-	}
-	
-	public void importFileFromFile(String fileName){
-		fromJson(new JSONObject(FileManager.loadFromFile(fileName)));
-	}
-	
 	public Song addSong(JSONObject object){
-		String title = object.getString("title");
-		if(songs.containsKey(title)){
-			System.out.println("song " + title + " už existuje");
-			return songs.get(title);
+		Song song;
+		if(object.has("title")){
+			String title = object.getString("title");
+			if(songs.containsKey(title)){
+				return songs.get(title);
+			}
+			song = new Song(object);
+			songs.put(title.toLowerCase(), song);
+			//todo dorobiť pridanie autorov
 		}
-		Song song = new Song(object);
-		songs.put(title, song);
-		//todo dorobiť pridanie autorov
+		else{
+			String title = object.getString("spotifyId");
+			if(songs.containsKey(title)){
+				return songs.get(title);
+			}
+			song = new Song(object);
+			songs.put(title, song);
+		}
 		return song;
 	}
 	
@@ -108,14 +135,34 @@ public class Library {
 		return song;
 	}
 	
+	//IMPORTERS
+	
+	public void importFilesFromDirectory(String path){
+		List<String> songs = FileSearcher.searchDir(path).stream().filter(a -> a.contains(".mp3")).collect(Collectors.toList());
+		
+		FileUtils.createLibrary(this, songs);
+		
+		postProcess();
+	}
+	
+	public void importFileFromFile(String fileName){
+		fromJson(new JSONObject(FileManager.loadFromFile(fileName)));
+	}
+	
 	public void fromJson(JSONObject json){
-		JSONArray songsArray = json.getJSONArray("songs");
+		JSONArray artstArray = json.getJSONArray("artists");
+//		for(int i=0 ; i<artstArray.length() ; i++){
+//			addArtist(artstArray.getJSONObject(i));
+//		}
+
+			JSONArray songsArray = json.getJSONArray("songs");
 		for(int i=0 ; i<songsArray.length() ; i++){
 			JSONObject songObject = songsArray.getJSONObject(i);
 			Song song = addSong(songObject);
 			JSONArray artists = songObject.getJSONArray("artists");
 			for(int j=0 ; j<artists.length() ; j++){
-				Artist artist = addArtist(artists.getString(j));
+				Artist artist = addArtist(artists.getJSONObject(j));
+//				Artist artist = addArtist(artists.getString(j));
 				song.addArtist(artist);
 				artist.addSong(song);
 			}
@@ -139,18 +186,22 @@ public class Library {
 	}
 	
 	
-	public void postProcess(){
-		System.out.println("test č. 1: " + showStats());
-		//rozdeli na autorov ktorý sa rozdelili podla substringov v konštruktore 
+	public void divideArtists(){
 		List<Artist> array = artists.values().stream().filter(a -> a.subTitles.length > 1).collect(Collectors.toList());
 		for(int i=0 ; i<array.size() ; i++){
 			divideArtist(array.get(i));
 		}
-
+	}
+	
+	public void postProcess(){
+		System.out.println("test č. 1: " + showStats());
+		//rozdeli na autorov ktorý sa rozdelili podla substringov v konštruktore 
+		divideArtists();
+		List<Artist> array;
 		System.out.println("test č. 2: " + showStats());
 		//prejde všetky ID artistov spolu s názov súboru a porovnáva ich 
 		artists.keySet().stream().forEach(artist -> {
-			songs.values().stream().filter(a -> !a.containsArtists(artists.get(artist))).forEach(song -> {
+			songs.values().stream().filter(a -> !a.containsArtists(artists.get(artist)) && a.getTitle() != null).forEach(song -> {
 				String searchA = song.getTitle().toLowerCase();
 				String searchB = artist.toLowerCase();
 				if(searchA.contains(" " + searchB + " ") || 
@@ -166,6 +217,9 @@ public class Library {
 		
 		for(Song s : songs.values()){
 			String title = s.getTitle();
+			if(title == null){
+				continue;
+			}
 			int counter = 0;
 			for( int i=0; i<title.length(); i++ ) {
 			    if( title.charAt(i) == '-' ) {
@@ -228,16 +282,57 @@ public class Library {
 		
 		return result;
 	}
+
+
+	public void changeSongArtist(Song s, String value) {
+		String[] artists = value.split(";");
+		System.out.println(s.getStringArtists() + " -> " + value);
+		int counter = 0;
+		for(String artist : artists){
+			if(!s.hasArtist(artist)){
+				Artist artistNew = this.artists.get(artist.trim());
+				if(artistNew == null){
+					artistNew = this.artists.get(artist.toLowerCase().trim());
+				}
+				if(artistNew == null){
+					artistNew = new Artist(artist);
+				}
+				
+				s.addArtist(artistNew);
+				artistNew.addSong(s);
+			}
+			
+			counter++;
+		}
+		if(s.getArtistCount() != counter){
+//			s.getArtists().stream().filter(a -> !value.toLowerCase().contains(a.getBestTitle())).forEach(a -);)
+			List<Artist> artistsList = s.getArtists();
+			for(int i=0 ; i<artistsList.size() ; i++){
+				Artist a = artistsList.get(i);
+				if(!value.toLowerCase().contains(a.getBestTitle())){
+					s.removeArtist(a);
+					a.removeSong(s);
+				}
+			}
+//			for(Artist a : s.getArtists()){
+//				if(!value.toLowerCase().contains(a.getBestTitle())){
+//					s.removeArtist(a);
+//					a.removeSong(s);
+//				}
+//			}
+		}
+	}
 	
 	//GETTERS
 	public Object[][] getArtistData(){
-		Object[][] result = new Object[artists.size()][4];
+		Object[][] result = new Object[artists.size()][5];
 		int i=0;
 		for(Artist a : artists.values()){
 			result[i][0] = i + 1;
 			result[i][1] = a.getBestTitle();
 			result[i][2] = a.getNumberOfSongs();
 			result[i][3] = a;
+			result[i][4] = a.hasSpotifyData() ? "yes" : "no";
 			i++;
 		}
 		return result;
@@ -250,20 +345,23 @@ public class Library {
 	}
 	
 	public Object[][] getTableData(){
-		Object[][] result = new Object[songs.size()][SongsViewer.titles.length];
-		int counter = 0, i;
+		Object[][] result = new Object[(int)songs.values().stream().filter(a -> !a.isRemoved()).count()][Pos.SongTitlesSize()];
+		
+		int counter = 0;
 		for(Song s : songs.values()){
-			i = 0;
-			result[counter][i++] = Integer.toString(counter);
-			result[counter][i++] = s.getStringArtists();//s.getTagArtist();
-			result[counter][i++] = s.getBestName();//s.getTagName();
-			result[counter][i++] = s.getYear();
-			result[counter][i++] = s.getGenre();
-			result[counter][i++] = s.getLengthFormatted();
-			result[counter][i++] = Long.toString(s.getBitrate());
-			result[counter][i++] = s.getTitle();
-			result[counter][i++] = s;
-			result[counter][i++] = s.getSource();
+			if(s.isRemoved()){
+				continue;
+			}
+			result[counter][Pos.SONGS_ID.getId()]		= Integer.toString(counter);
+			result[counter][Pos.SONGS_SONG.getId()] 	= s;
+			result[counter][Pos.SONGS_NAME.getId()]		= s.getBestName();//s.getTagName();
+			result[counter][Pos.SONGS_YEAR.getId()]		= s.getBestYear();
+			result[counter][Pos.SONGS_TITLE.getId()] 	= s.getTitle();
+			result[counter][Pos.SONGS_GENRE.getId()]	= s.getBestGenre();
+			result[counter][Pos.SONGS_SOURCE.getId()] 	= s.getSource();
+			result[counter][Pos.SONGS_LENGTH.getId()] 	= s.getLengthFormatted();
+			result[counter][Pos.SONGS_ARTIST.getId()] 	= s.getStringArtists();//s.getTagArtist();
+			result[counter][Pos.SONGS_BITRATE.getId()] 	= Long.toString(s.getBitrate());
 			counter++;
 		}
 		return result;
@@ -272,8 +370,9 @@ public class Library {
 	public int getNumberOfSongs(){return songs.size();}
 	public int getNumberOfArtists(){return artists.size();}
 	public Song getSong(String title){return songs.get(title.toLowerCase());}
+	public Song getSongById(String title){return songs.get(title);}
 	public Artist getArtist(String title){return artists.get(title.toLowerCase());}
-	
+	public List<Artist> getArtistsList(){return new ArrayList<Artist>(artists.values());}
 	public Set<String> getSimilarArtists(String title){
 		return artists.keySet().stream().filter(a -> a.toLowerCase().trim().contains(title.toLowerCase().trim())).collect(Collectors.toSet());
 	}
@@ -287,5 +386,4 @@ public class Library {
 	public Set<String> getSongNames(){
 		return songs.values().stream().map(a -> a.getTagName()).collect(Collectors.toSet());
 	}
-	
 }

@@ -22,7 +22,6 @@ public class ArtistPanel extends JPanel{
 
 //	private Artist artist;
 
-	private Object[] titles = new Object[]{"#", "Name", "Genre", "Length", "play"};
 	
 	public ArtistPanel(Artist artist, PlayerManager playerManager){
 //		this.artist = artist;
@@ -32,7 +31,7 @@ public class ArtistPanel extends JPanel{
 		topPanel.add(new JLabel("Počet pesničiek: " + artist.getNumberOfSongs()));
 		add(topPanel, BorderLayout.NORTH);
 		
-		JTable table = new JTable(artist.getTableData(), titles){
+		JTable table = new JTable(artist.getTableData(), Pos.getArtistTitles()){
 			private static final long serialVersionUID = 1L;
 
 			public TableCellRenderer getCellRenderer(int row, int column) {
@@ -41,7 +40,7 @@ public class ArtistPanel extends JPanel{
 						if(value == null || value.toString().isEmpty()){
 							return new JLabel("");
 						}
-						if(column == 4){
+						if(column == Pos.ARTIST_SONG.getId()){
 							return new JButton(playerManager.isPlaying((Song)value) ? "\u25fc" : "\u25b6");
 						}
 						JLabel label = new JLabel(value.toString());
@@ -57,9 +56,9 @@ public class ArtistPanel extends JPanel{
 		table.setRowSelectionAllowed(true);
         table.setRowHeight(30);
         
-		table.getColumnModel().getColumn(0).setMaxWidth(40);
-		table.getColumnModel().getColumn(3).setMaxWidth(60);
-		table.getColumnModel().getColumn(4).setMaxWidth(60);
+		table.getColumnModel().getColumn(Pos.ARTIST_ID.getId()).setMaxWidth(40);
+		table.getColumnModel().getColumn(Pos.ARTIST_LENGTH.getId()).setMaxWidth(60);
+		table.getColumnModel().getColumn(Pos.ARTIST_SONG.getId()).setMaxWidth(60);
 		
 		table.addMouseListener(new MouseListener() {
 			@Override

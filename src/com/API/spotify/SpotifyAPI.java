@@ -14,7 +14,7 @@ import com.utils.HttpHandler;
 
 public class SpotifyAPI {
 	static SpotifyData data = new SpotifyData();
-	private final static String AUTH = "BQA0wv_yhIyBDCfXoIt9Z5EZzDLpYsSSzGPiDemeIM4qbI05-s04NZTR9PrAKMeTsbCP8A8jCREYxfRdRMhqVXWVu5ikExnCN6-43g2TVzI61zZZw3yMYn_5vYt_4xar6uVdk3vMQCZk4nDnkN8z2S9zMXU7";
+	private final static String AUTH = "BQCxRJsjiLK8AKmKQ5elTD4x5Po00tzoLjd3hnXSzrVTc48XfEeh-O-w2aImMX1neEh9lZNA_dc2FQGlVbQ0IlX6-Gdf1tzpOlV14mzu_QQIUEKAIuwyt5lb5t5mqobAYjhL_5yktsvOhVhSpHn-ldt5mfQ_";
 	
 	private final static String SONG_URL = "https://api.spotify.com/v1/tracks/";
 	private final static String SEARCH_URL = "https://api.spotify.com/v1/search";
@@ -56,7 +56,7 @@ public class SpotifyAPI {
 					allSongs.put(songs.getJSONObject(i));
 				}
 				System.out.println("načítalo sa a teraz počet zaznamov: " + allSongs.length());
-				Thread.sleep(10000);
+				Thread.sleep(1000);
 				
 				if(object.isNull("next"))
 					break;

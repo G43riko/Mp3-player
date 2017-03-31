@@ -31,7 +31,7 @@ public class ArtistsViewer implements AbstractTablePanel{
 	private JPanel panel = new JPanel(new BorderLayout());
 	private JTable table;
 	TableRowSorter<TableModel> sorter;
-	private Object[] titles = new String[]{"#", "Artist", "songs", "Info"};
+	private Object[] titles = new String[]{"#", "Artist", "songs", "Info", "Spotify"};
 	
 	public void setValueData(Object[][] data) {
 		DefaultTableModel model = new DefaultTableModel(data, titles); 
@@ -139,5 +139,6 @@ public class ArtistsViewer implements AbstractTablePanel{
 		table.getColumnModel().getColumn(0).setMaxWidth(40);
 		table.getColumnModel().getColumn(2).setMaxWidth(60);
 		table.getColumnModel().getColumn(3).setMaxWidth(80);
+		table.getColumnModel().getColumn(4).setMaxWidth(80);
 	}
 }
