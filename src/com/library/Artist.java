@@ -171,6 +171,7 @@ public class Artist {
 //	public int getNumberOfSongs(){return songs.size();}
 	public boolean hasSpotifyData(){return addSpotifyData > 0;}
 	public boolean isRemoved(){return removed;}
+	
 	public Object[][] getTableData(){
 		Object[][] result = new Object[getNumberOfSongs()][Pos.ArtistTitlesSize()];
 		int counter = 0;
@@ -178,13 +179,20 @@ public class Artist {
 			if(s.isRemoved()){
 				continue;
 			}
-			result[counter][Pos.ARTIST_NAME.getId()] = s.getBestName();
-			result[counter][Pos.ARTIST_GENRE.getId()] = s.getBestGenre();
-			result[counter][Pos.ARTIST_LENGTH.getId()] = Long.toString(s.getBestLength());
-			result[counter][Pos.ARTIST_SONG.getId()] = s;
-			result[counter][Pos.ARTIST_ID.getId()] = Integer.toString(counter++);
+			result[counter][Pos.ARTIST_ID.getId()] 		= Integer.toString(counter);
+			result[counter][Pos.ARTIST_SONG.getId()] 	= s;
+			result[counter][Pos.ARTIST_NAME.getId()] 	= s.getBestName();
+			result[counter][Pos.ARTIST_GENRE.getId()] 	= s.getBestGenre();
+			result[counter][Pos.ARTIST_LENGTH.getId()] 	= Long.toString(s.getBestLength());
+			result[counter][Pos.ARTIST_SPOTIFY.getId()] = s.hasSpotifyData() ? "yes" : "no";
+			counter++;
+			
 		}
 		return result;
+	}
+	
+	public int songsWithSpotify(){
+		return (int)songs.stream().filter(a -> a.hasSpotifyData()).count();
 	}
 	public String getBestTitle(){
 		if(!spotifyName.isEmpty()){

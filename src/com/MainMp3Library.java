@@ -47,7 +47,7 @@ import javafx.scene.media.MediaPlayer;
 import javafx.stage.Stage;
 public class MainMp3Library{
 //	static AdvancedPlayer player = null;;
-	private final static String FILE_LOCAL_SONGS = "data2.txt";
+	private final static String FILE_LOCAL_SONGS = "data3.txt";
 	private final static String FILE_SPOTIFY_SONGS	= "spotifySongs2";
 	static File playing = null;
 	Library lib = new Library();
@@ -62,23 +62,11 @@ public class MainMp3Library{
 		lib.importFileFromFile(FILE_LOCAL_SONGS);
 //		lib.importFilesFromDirectory(path);
 		
-		
 		System.out.println(lib.showStats());
 		SpotifyAPI.loadSongsFromFile(FILE_SPOTIFY_SONGS);
+//		lib.addSpotifyData(SpotifyAPI.getData().getData());
 		
 		/*
-		
-		Object[][] data = SpotifyAPI.getData().getData();
-		for(int i=0 ; i<data.length ; i++){
-			Song song = lib.addSong((String)data[i][0], (String)data[i][1], (long)data[i][2]);
-			HashMap<String, String> songArtists = (HashMap<String, String>)data[i][3];
-			for(Entry<String, String> artistData : songArtists.entrySet()){
-				Artist artist = lib.addArtist(artistData.getKey(), artistData.getValue());
-//				System.out.println(artist);
-				song.addArtist(artist);
-				artist.addSong(song);
-			}
-		}
 		System.out.println(lib.showStats());
 		
 		int counter = 0, sum = 0, two = 0;
@@ -123,7 +111,7 @@ public class MainMp3Library{
 //		WebV
 		guiManager = new GuiManager(lib, playerManager);
 		
-		FileManager.saveToFile("data2.txt", lib.toJson().toString());
+//		FileManager.saveToFile("data2.txt", lib.toJson().toString());
 	}
 	
 

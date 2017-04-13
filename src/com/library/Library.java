@@ -6,15 +6,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
-import javax.swing.text.Position;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.gui.Pos;
-import com.gui.SongsViewer;
 import com.utils.FileManager;
 import com.utils.FileSearcher;
 import com.utils.FileUtils;
@@ -27,6 +25,18 @@ public class Library {
 	public List<Artist> artistsPossibleJoined = new LinkedList<Artist>();
 	
 	//ADDERS
+	
+	public void addSpotifyData(Object[][] data){
+		for(int i=0 ; i<data.length ; i++){
+			Song song = addSong((String)data[i][0], (String)data[i][1], (long)data[i][2]);
+			HashMap<String, String> songArtists = (HashMap<String, String>)data[i][3];
+			for(Entry<String, String> artistData : songArtists.entrySet()){
+				Artist artist = addArtist(artistData.getKey(), artistData.getValue());
+				song.addArtist(artist);
+				artist.addSong(song);
+			}
+		}
+	}
 	
 	public Artist addArtist(String title){
 		title = title.toLowerCase();
@@ -67,17 +77,25 @@ public class Library {
 			artists.put(artist.getSpotifyId(), artist);
 		}
 		else{
-			artists.put(artist.getTitle(), artist);
+			artists.put(artist.getBestTitle(), artist);
 		}
 		return artist;
 	}
 	
 	public Artist addArtist(String id, String name){
 		Artist artist = null;
+		
+		//ak existuje podla nazvu
 		if(artists.containsKey(name.toLowerCase())){
 			artist = artists.get(name.toLowerCase());
 			artist.setSpotifyData(id, name);
-//			System.out.println("existuje: " + name);
+			return artist;
+		}
+		
+		//ak existuje podla id
+		if(artists.containsKey(id)){
+			artist = artists.get(id);
+			artist.setSpotifyData(id, name);
 			return artist;
 		}
 		artist = new Artist(id, name);
@@ -150,18 +168,29 @@ public class Library {
 	}
 	
 	public void fromJson(JSONObject json){
-		JSONArray artstArray = json.getJSONArray("artists");
+//		JSONArray artstArray = json.getJSONArray("artists");
 //		for(int i=0 ; i<artstArray.length() ; i++){
 //			addArtist(artstArray.getJSONObject(i));
 //		}
 
-			JSONArray songsArray = json.getJSONArray("songs");
+		JSONArray songsArray = json.getJSONArray("songs");
 		for(int i=0 ; i<songsArray.length() ; i++){
 			JSONObject songObject = songsArray.getJSONObject(i);
 			Song song = addSong(songObject);
 			JSONArray artists = songObject.getJSONArray("artists");
 			for(int j=0 ; j<artists.length() ; j++){
-				Artist artist = addArtist(artists.getJSONObject(j));
+				JSONObject tmp = artists.optJSONObject(j);
+				Artist artist = null;
+				if(tmp == null){
+					String tmpString = artists.optString(j, "");
+					if(tmpString.isEmpty()){
+						continue;
+					}
+					artist = addArtist(tmpString);
+				}
+				else{
+					artist = addArtist(tmp);
+				}
 //				Artist artist = addArtist(artists.getString(j));
 				song.addArtist(artist);
 				artist.addSong(song);
@@ -325,14 +354,16 @@ public class Library {
 	
 	//GETTERS
 	public Object[][] getArtistData(){
-		Object[][] result = new Object[artists.size()][5];
+		Object[][] result = new Object[artists.size()][Pos.ArtistsTitlesSize()];
 		int i=0;
 		for(Artist a : artists.values()){
-			result[i][0] = i + 1;
-			result[i][1] = a.getBestTitle();
-			result[i][2] = a.getNumberOfSongs();
-			result[i][3] = a;
-			result[i][4] = a.hasSpotifyData() ? "yes" : "no";
+			result[i][Pos.ARTISTS_ID.getId()] = i + 1;
+			result[i][Pos.ARTISTS_NAME.getId()] = a.getBestTitle();
+			result[i][Pos.ARTISTS_SONGS.getId()] = a.getNumberOfSongs();
+			result[i][Pos.ARTISTS_INFO.getId()] = a;
+//			result[i][Pos.ARTISTS_SPOTIFY.getId()] = a.hasSpotifyData() ? "yes" : "no";
+			result[i][Pos.ARTISTS_SPOTIFY.getId()] = a.songsWithSpotify() + " / " + a.getNumberOfSongs();
+			result[i][Pos.ARTISTS_SPOTIFY.getId()] = a.getNumberOfSongs() - a.songsWithSpotify();
 			i++;
 		}
 		return result;

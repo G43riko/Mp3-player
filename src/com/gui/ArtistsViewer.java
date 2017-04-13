@@ -30,11 +30,11 @@ public class ArtistsViewer implements AbstractTablePanel{
 	private JPanel topPanel = new JPanel();
 	private JPanel panel = new JPanel(new BorderLayout());
 	private JTable table;
-	TableRowSorter<TableModel> sorter;
-	private Object[] titles = new String[]{"#", "Artist", "songs", "Info", "Spotify"};
+	private TableRowSorter<TableModel> sorter;
+//	private Object[] titles = new String[]{"#", "Artist", "songs", "Info", "Spotify"};
 	
 	public void setValueData(Object[][] data) {
-		DefaultTableModel model = new DefaultTableModel(data, titles); 
+		DefaultTableModel model = new DefaultTableModel(data, Pos.getArtistsTitles()); 
 		table.setModel(model);
 		sorter.setModel(model);
 		updateTable();
@@ -43,10 +43,10 @@ public class ArtistsViewer implements AbstractTablePanel{
 	
 	public ArtistsViewer(Object[][] data, PlayerManager playerManager){
 		
-		table = new JTable(data, titles){
+		table = new JTable(data, Pos.getArtistsTitles()){
 			private static final long serialVersionUID = 1L;
 			public boolean isCellEditable(int row, int column){
-				return column != 0 && column != 2&& column != 3;
+				return column == Pos.ARTISTS_NAME.getId();
 			}
 			public TableCellRenderer getCellRenderer(int row, int column) {
 				return new TableCellRenderer() {
@@ -54,7 +54,7 @@ public class ArtistsViewer implements AbstractTablePanel{
 						if(value == null || value.toString() == null || value.toString().isEmpty()){
 							return new JLabel("");
 						}
-						if(column == 3){
+						if(column == Pos.ARTISTS_INFO.getId()){
 							return new JButton("Info");
 						}
 						JLabel label = new JLabel(value.toString());
@@ -113,19 +113,20 @@ public class ArtistsViewer implements AbstractTablePanel{
 		panel.add(topPanel, BorderLayout.NORTH);
         
 		sorter = new TableRowSorter<TableModel>(table.getModel());
-		
-		sorter.setComparator(0, (a, b)->(Integer.parseInt(a.toString()) - Integer.parseInt(b.toString())));
+		sorter.setComparator(Pos.ARTISTS_SONGS.getId(), (a, b)->(Integer.parseInt(a.toString()) - Integer.parseInt(b.toString())));
 		RowFilter<Object, Object> filter = new RowFilter<Object, Object>() {
 			public boolean include(Entry<?, ?> entry) {
 				String search = searchBar.getText().toLowerCase().trim();
-				if(search.isEmpty())
+				if(search.isEmpty()){
 					return true;
-				if(entry.getValue(1) != null && entry.getValue(1).toString().toLowerCase().trim().contains(search))
+				}
+				if(entry.getValue(1) != null && entry.getValue(1).toString().toLowerCase().trim().contains(search)){
 					return true;
+				}
 				return false;
 			};
 		};
-	
+		table.setAutoCreateRowSorter(false);
 		sorter.setRowFilter(filter);
 		table.setRowSorter(sorter);
 	}
@@ -136,9 +137,9 @@ public class ArtistsViewer implements AbstractTablePanel{
 		return panel;
 	}
 	private void updateTable(){
-		table.getColumnModel().getColumn(0).setMaxWidth(40);
-		table.getColumnModel().getColumn(2).setMaxWidth(60);
-		table.getColumnModel().getColumn(3).setMaxWidth(80);
-		table.getColumnModel().getColumn(4).setMaxWidth(80);
+		table.getColumnModel().getColumn(Pos.ARTISTS_ID.getId()).setMaxWidth(40);
+		table.getColumnModel().getColumn(Pos.ARTISTS_SONGS.getId()).setMaxWidth(60);
+		table.getColumnModel().getColumn(Pos.ARTISTS_INFO.getId()).setMaxWidth(80);
+		table.getColumnModel().getColumn(Pos.ARTISTS_SPOTIFY.getId()).setMaxWidth(80);
 	}
 }

@@ -20,6 +20,7 @@ import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer.UIResource;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -54,8 +55,17 @@ import com.player.PlayerManager;
 public class SongsViewer implements AbstractTablePanel{
 //	private PlayerManager playerManager;
 	private JTextField searchBar = new JTextField();
+	private JCheckBox isSpotify = new JCheckBox("Spotify song", true);
+	private JCheckBox isLocal = new JCheckBox("Local song", true);
 	private JScrollPane scrollPanel;
 	private JPanel topPanel = new JPanel();
+	private ActionListener onFilterChange = new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			sorter.modelStructureChanged();
+			table.requestFocusInWindow();
+		}
+	};
 	private JPanel panel = new JPanel(new BorderLayout());
 	private JTable table;
 	private Library library;
@@ -79,10 +89,10 @@ public class SongsViewer implements AbstractTablePanel{
 	
 	public SongsViewer(Library lib, PlayerManager playerManager){
 		library = lib;
-		Object[][] data = lib.getTableData();
-//		this.playerManager = playerManager;
-//		AdvancedPlayer player = playerManager.getPlayer();
-		
+			Object[][] data = lib.getTableData();
+	//		this.playerManager = playerManager;
+	//		AdvancedPlayer player = playerManager.getPlayer();
+			
 		table = new JTable(data, Pos.getSongTitles()){
 			private static final long serialVersionUID = 1L;
 			public boolean isCellEditable(int row, int column){
@@ -226,28 +236,55 @@ public class SongsViewer implements AbstractTablePanel{
 		
 		panel.add(scrollPanel, BorderLayout.CENTER);
 		searchBar.setPreferredSize(new Dimension(200, 20));
-		searchBar.addActionListener(a -> {
-			sorter.modelStructureChanged();
-			table.requestFocusInWindow();
-		});
-		
+		searchBar.addActionListener(onFilterChange);
+		isSpotify.addActionListener(onFilterChange);
+		isLocal.addActionListener(onFilterChange);
 		topPanel.setPreferredSize(new Dimension(300, 30));
 		topPanel.add(new JLabel("vyhladať: "));
 		topPanel.add(searchBar);
+		topPanel.add(isSpotify);
+		topPanel.add(isLocal);
 		panel.add(topPanel, BorderLayout.NORTH);
 		
 		sorter.setComparator(0, (a, b)->(Integer.parseInt(a.toString()) - Integer.parseInt(b.toString())));
 		RowFilter<Object, Object> filter = new RowFilter<Object, Object>() {
 			public boolean include(Entry<?, ?> entry) {
+				if(isSpotify.isSelected()){
+					if(entry.getValue(Pos.SONGS_SOURCE.getId()) != null && !entry.getValue(Pos.SONGS_SOURCE.getId()).toString().contains("S")){
+						return false;
+					}
+				}
+				else{
+					if(entry.getValue(Pos.SONGS_SOURCE.getId()) != null && entry.getValue(Pos.SONGS_SOURCE.getId()).toString().contains("S")){
+						return false;
+					}
+				}
+				
+				if(isLocal.isSelected()){
+					if(entry.getValue(Pos.SONGS_SOURCE.getId()) != null && !entry.getValue(Pos.SONGS_SOURCE.getId()).toString().contains("L")){
+						return false;
+					}
+				}
+				else{
+					if(entry.getValue(Pos.SONGS_SOURCE.getId()) != null && entry.getValue(Pos.SONGS_SOURCE.getId()).toString().contains("L")){
+						return false;
+					}
+				}
+				
 				String search = searchBar.getText().toLowerCase().trim();
-				if(search.isEmpty())
+				if(search.isEmpty()){
 					return true;
-				if(entry.getValue(Pos.SONGS_ARTIST.getId()) != null && entry.getValue(Pos.SONGS_ARTIST.getId()).toString().toLowerCase().trim().contains(search))
+				}
+				if(entry.getValue(Pos.SONGS_ARTIST.getId()) != null && entry.getValue(Pos.SONGS_ARTIST.getId()).toString().toLowerCase().trim().contains(search)){
 					return true;
-				if(entry.getValue(Pos.SONGS_NAME.getId()) != null && entry.getValue(Pos.SONGS_NAME.getId()).toString().toLowerCase().trim().contains(search))
+				}
+				if(entry.getValue(Pos.SONGS_NAME.getId()) != null && entry.getValue(Pos.SONGS_NAME.getId()).toString().toLowerCase().trim().contains(search)){
 					return true;
-				if(entry.getValue(Pos.SONGS_TITLE.getId()) != null && entry.getValue(Pos.SONGS_TITLE.getId()).toString().toLowerCase().trim().contains(search))
+				}
+				if(entry.getValue(Pos.SONGS_TITLE.getId()) != null && entry.getValue(Pos.SONGS_TITLE.getId()).toString().toLowerCase().trim().contains(search)){
 					return true;
+				}
+				
 				return false;
 			};
 		};
@@ -257,11 +294,11 @@ public class SongsViewer implements AbstractTablePanel{
 	}
 	
 	private void showDetail(int selectedRows) {
-		System.out.println("selectedRows: " + selectedRows);
+//		System.out.println("selectedRows: " + selectedRows);
 		Song song = (Song)table.getValueAt(selectedRows, Pos.SONGS_SONG.getId());
 		JDialog d2 = new JDialog((JFrame)SwingUtilities.getWindowAncestor(table), song.getBestName(), true);
 		d2.setLocationRelativeTo(d2.getOwner());
-		System.out.println("song: " + song);
+//		System.out.println("song: " + song);
   		d2.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
   		d2.add(new SongPanel(song));
   		d2.setLocation(-300, -200);

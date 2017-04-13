@@ -88,8 +88,7 @@ public class PlayerManager {
 						update();
 						player.play();
 					} catch (Exception e1) {
-						
-						e1.printStackTrace();
+						System.out.println("nepodarilo sa prehrať song: " + song);
 					}
 				}
 			});

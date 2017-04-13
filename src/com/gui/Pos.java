@@ -16,12 +16,17 @@ public enum Pos {
 	SONGS_SOURCE(0, "Source", 9, true),
 
 	ARTISTS_ID(1, "#", 0, true),
+	ARTISTS_NAME(1, "Name", 1, true),
+	ARTISTS_SONGS(1, "Songs", 2, true),
+	ARTISTS_INFO(1, "Info", 3, true),
+	ARTISTS_SPOTIFY(1, "Spotify", 4, true),
 	
 	ARTIST_ID(2, "#", 0, true),
 	ARTIST_NAME(2, "Name", 1, true),
 	ARTIST_GENRE(2, "Genre", 2, true),
 	ARTIST_LENGTH(2, "Length", 3, true),
-	ARTIST_SONG(2, "Song", 4, true);
+	ARTIST_SONG(2, "Song", 4, true),
+	ARTIST_SPOTIFY(2, "Spotify", 5, true);
 	
     private final String label;
     private final int index;
@@ -70,15 +75,39 @@ public enum Pos {
 		Object[] result = new Object[ArtistTitlesSize()];
 		for(int i=0 ; i<result.length ; i++){
 			result[i] = getArtistTitleById(i);
+//			System.out.println("artist title: " + result[i]);
 		}
+//		System.out.println("artist titles: " + result.length);
 		return result;
 	}
 	public static int ArtistTitlesSize() {
+//		System.out.println("artist size: " + titlesOfType(2));
 		return titlesOfType(2);
 	}
 	
 	
 	//ARTISTS
+	private static String getArtistsTitleById(int pos){
+		for(Pos p : Pos.values()){
+			if(p.index == pos && p.type == 1){
+				return p.label;
+			}
+		}
+		return "";
+	}
+	public static Object[] getArtistsTitles(){
+		Object[] result = new Object[ArtistsTitlesSize()];
+		for(int i=0 ; i<result.length ; i++){
+			result[i] = getArtistsTitleById(i);
+//			System.out.println("artists title: " + result[i]);
+		}
+//		System.out.println("artists titles: " + result.length);
+		return result;
+	}
+	public static int ArtistsTitlesSize() {
+//		System.out.println("artists size: " + titlesOfType(1));
+		return titlesOfType(1);
+	}
 
 	
 	//GLOBAL

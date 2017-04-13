@@ -12,6 +12,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
 import com.library.Artist;
 import com.library.Song;
@@ -19,18 +21,21 @@ import com.player.PlayerManager;
 
 public class ArtistPanel extends JPanel{
 	private static final long serialVersionUID = 1L;
+	private TableRowSorter<TableModel> sorter;
 
 //	private Artist artist;
 
 	
 	public ArtistPanel(Artist artist, PlayerManager playerManager){
 //		this.artist = artist;
+		System.out.println("aaaaaaaaaaaaa");
 		setLayout(new BorderLayout());
 		
 		JPanel topPanel = new JPanel();
 		topPanel.add(new JLabel("Počet pesničiek: " + artist.getNumberOfSongs()));
 		add(topPanel, BorderLayout.NORTH);
-		
+		Object[][] a = artist.getTableData();
+		Object[] b = Pos.getArtistTitles();
 		JTable table = new JTable(artist.getTableData(), Pos.getArtistTitles()){
 			private static final long serialVersionUID = 1L;
 
@@ -52,7 +57,9 @@ public class ArtistPanel extends JPanel{
 				};
 			};
 		};
-
+		sorter = new TableRowSorter<TableModel>(table.getModel());
+		table.setRowSorter(sorter);
+		
 		table.setRowSelectionAllowed(true);
         table.setRowHeight(30);
         

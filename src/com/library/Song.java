@@ -196,7 +196,8 @@ public class Song {
 	public boolean containsArtists(Artist artist){
 		return artists.contains(artist);
 	}
-	
+
+	public boolean hasSpotifyData(){return addSpotifyData > 0;}
 	public JSONObject toJson(){
 		JSONObject result = new JSONObject();
 		JSONArray array = new JSONArray();
