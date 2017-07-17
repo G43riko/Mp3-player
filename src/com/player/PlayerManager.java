@@ -101,6 +101,6 @@ public class PlayerManager {
 		
 	}
 	public void playSkipTo(float i) {
-		
+		System.out.println("klikol na " + i);
 	}
 }

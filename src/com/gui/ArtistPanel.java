@@ -24,11 +24,10 @@ public class ArtistPanel extends JPanel{
 	private TableRowSorter<TableModel> sorter;
 
 //	private Artist artist;
-
+	
 	
 	public ArtistPanel(Artist artist, PlayerManager playerManager){
 //		this.artist = artist;
-		System.out.println("aaaaaaaaaaaaa");
 		setLayout(new BorderLayout());
 		
 		JPanel topPanel = new JPanel();

@@ -13,9 +13,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class SpotifyData {
-	private List<SpotifySong> songs = new ArrayList<SpotifySong>();
-	private List<SpotifyPlaylist> playlists = new ArrayList<SpotifyPlaylist>();
-	private Map<String, SpotifyArtist> artists = new HashMap<String, SpotifyArtist>();
+	private List<SpotifySong> 			songs 		= new ArrayList<SpotifySong>();
+	private List<SpotifyPlaylist> 		playlists 	= new ArrayList<SpotifyPlaylist>();
+	private Map<String, SpotifyArtist> 	artists 	= new HashMap<String, SpotifyArtist>();
 	private int duplicateArtists = 0;
 	
 	//CLASES
@@ -39,7 +39,7 @@ public class SpotifyData {
 			result[i][2] = song.duration;
 			HashMap<String, String> songArtists = new HashMap<String, String>();
 			for(SpotifyArtist artist : song.artists){
-				songArtists.put(artist.id, artist.name);
+				songArtists.put(artist.getId(), artist.getName());
 			}
 			result[i][3] = songArtists;
 		}
@@ -78,7 +78,7 @@ public class SpotifyData {
 			JSONArray artists = object.getJSONArray("artists");
 			for(int i=0 ; i<artists.length() ; i++){
 				SpotifyArtist artist = getArtist(artists.getJSONObject(i));
-				artist.songs.add(song);
+				artist.addSong(song);
 				song.artists.add(artist);
 			}
 		}
@@ -88,7 +88,7 @@ public class SpotifyData {
 	//GETTERS
 	
 	public Set<String> getArtistsString(){
-		return artists.values().stream().map(a -> a.name).collect(Collectors.toSet());
+		return artists.values().stream().map(a -> a.getName()).collect(Collectors.toSet());
 	}
 	
 	public Set<String> getSongStrings(){
@@ -115,10 +115,8 @@ public class SpotifyData {
  			return artists.get(object.getString("id"));
  		}
  		
-		SpotifyArtist artist = new SpotifyArtist();
-		artist.id = object.getString("id");
-		artist.name = object.getString("name");
-		artists.put(artist.id, artist);
+		SpotifyArtist artist = new SpotifyArtist(object.getString("id"), object.getString("name"));
+		artists.put(artist.getId(), artist);
 		return artist;
 	}
  	
@@ -169,8 +167,8 @@ public class SpotifyData {
 		System.out.println("Artists: " + artists.size());
 		System.out.println("duplicitných artistov: " + duplicateArtists);
 		artists.values().stream()
-						.sorted((a, b) -> b.songs.size() - a.songs.size())
-						.map(a -> a.name + ": " + a.songs.size())
+						.sorted((a, b) -> b.getSongsSize() - a.getSongsSize())
+						.map(a -> a.getName() + ": " + a.getSongsSize())
 						.limit(10)
 						.forEach(System.out::println);
 	}

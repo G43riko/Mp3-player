@@ -24,20 +24,21 @@ public class Matcher {
 		int similarAutors = 0;
 		Artist artist;
 		for(SpotifyArtist a : spotifyArtists.values()){
-			String artistName = a.name.toLowerCase().replace("the ", "").trim();
+			String artistName = a.getName().toLowerCase().replace("the ", "").trim();
 			artist = library.getArtist(artistName);
 			if(artist != null){
 				equalAutors++;
-				if(artist.getNumberOfSongs() <= a.songs.size()){
+				if(artist.getNumberOfSongs() <= a.getSongsSize()){
 					equalAutorsWithEqualSongsNumber++;
 					
 					Set<String> songs = artist.getSongs().stream().map(e -> e.getBestName().toLowerCase().trim()).collect(Collectors.toSet());
-					int equalSongs = 0;
-					for(SpotifySong s : a.songs){
-						if(songs.contains(s.name.toLowerCase().trim())){
-							equalSongs++;
-						}
-					}
+					int equalSongs = a.songsContainsString(songs).size();
+//					int equalSongs = 0;
+//					for(SpotifySong s : a.songs){
+//						if(songs.contains(s.name.toLowerCase().trim())){
+//							equalSongs++;
+//						}
+//					}
 					
 					if(equalSongs >= artist.getNumberOfSongs()){
 						equalAutorsWithEqualSongs++;

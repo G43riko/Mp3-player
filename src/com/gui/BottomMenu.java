@@ -79,6 +79,7 @@ public class BottomMenu extends Panel{
 		       int progressBarVal = (int)Math.round(((double)mouseX / (double)progress.getWidth()) * progress.getMaximum());
 		       progress.setValue(progressBarVal);
 		       progress.setString(Song.getFormattedTime(progressBarVal) + " /" + (actualSong == null ? 0 : actualSong.getLengthFormatted()));
+		       System.out.println(progressBarVal + ", " + progress.getMaximum() + ", " + actualSong.frames);
 		       player.playSkipTo(((float)progressBarVal / (float)progress.getMaximum()) * actualSong.frames);
 			}
 		});

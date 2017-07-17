@@ -17,4 +17,6 @@ public class SpotifySong {
 	public String toString() {
 		return name + "[" + id + "(" + isrc + ")](" + duration + ")";
 	}
+	
+	
 }
